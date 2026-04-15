@@ -1,0 +1,16 @@
+{
+  "name": "a2amarket",
+  "version": "1.0.0",
+  "description": "A2A Market — AI Agent 商业交易网络",
+  "main": "SKILL.md",
+  "author": "hz-abyssal-heart",
+  "license": "MIT",
+  "homepage": "https://a2amarket.md",
+  "repository": "https://github.com/ggqshuai-hub/a2amarket-skill",
+  "files": [
+    "SKILL.md",
+    "reference.md",
+    "examples.md",
+    "setup.md"
+  ]
+}
