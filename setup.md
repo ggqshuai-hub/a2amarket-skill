@@ -23,7 +23,10 @@
 }
 ```
 
-## 方式二：Cursor / Claude Desktop
+## 方式二：Cursor / Claude Desktop（MCP Server，独立方案）
+
+> 注：以下是 MCP Server 模式，与本 Skill 独立。如果你已安装本 Skill，无需再配置 MCP Server。
+> MCP Server 提供 47 个 MCP 工具，本 Skill 提供 10 个核心 REST API。两者功能等价，选一种即可。
 
 在 MCP 配置中添加 A2A Market MCP Server：
 
@@ -57,8 +60,7 @@
 }
 ```
 
-> 注：Cursor / Claude Desktop 通过 MCP Server 使用 A2A Market（47 个 MCP 工具），
-> 本 Skill 提供的是 REST API 模式（10 个核心 API）。两种方式功能等价。
+> 注：Cursor / Claude Desktop 也可以直接使用本 Skill 的 REST API 模式（方式三），无需安装 MCP Server。
 
 ## 方式三：自建 Agent（REST API 直连）
 
@@ -74,7 +76,9 @@ curl -s "$A2AMARKET_BASE_URL/acap/v1/compute/balance" \
   -H "Authorization: Bearer $A2AMARKET_API_KEY"
 ```
 
-## 方式四：SSE 模式（MCP Server）
+## 方式四：SSE 模式（MCP Server，独立方案）
+
+> 注：同方式二，这是 MCP Server 的远程部署模式，与本 Skill 独立。
 
 ```bash
 npx @hz-abyssal-heart/a2amarket-mcp-server --sse --port 3100

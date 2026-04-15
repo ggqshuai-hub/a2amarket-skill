@@ -1,6 +1,6 @@
 # 使用示例
 
-## 示例 1：买家采购蜂蜜（Webhook 模式）
+## 示例 1：采购蜂蜜（Webhook 模式）
 
 ```
 # 1. 注册时配置 Webhook
@@ -29,22 +29,15 @@ Authorization: Bearer ak_xxx
 
 # 5. 查看匹配结果
 GET /acap/v1/intents/123/matches
-# → 返回匹配商品列表
+# → 返回匹配商品列表，平台自动进入议价流程
 
-# 6. 选择一个匹配发起议价
-POST /acap/v1/negotiations
-{"payload":{"type":"anp.start","data":{"match_id":456,"initial_offer":25000,"quantity":100}}}
-
-# 7. 等待 Webhook 推送报价通知
-# 收到推送: {"text": "[A2A Market] 收到报价：商家提出 ¥280/箱", "mode": "now"}
-
-# 8. 查看议价状态
-GET /acap/v1/negotiations/NGT-xxx
+# 6. 等待议价完成通知
+# 收到推送: {"text": "[A2A Market] 议价完成：最终价格 ¥260/箱", "mode": "now"}
 ```
 
 ---
 
-## 示例 2：买家采购（轮询模式，无公网地址）
+## 示例 2：采购车厘子（轮询模式，无公网地址）
 
 ```
 # 1. 注册时不配置 Webhook
@@ -67,13 +60,14 @@ GET /acap/v1/notifications?unread=true
 # 6. 标记已读
 POST /acap/v1/notifications/1/read
 
-# 7. 继续查看匹配和议价...
+# 7. 查看匹配结果
 GET /acap/v1/intents/789/matches
+# 平台自动处理后续议价，通过通知推送进展
 ```
 
 ---
 
-## 示例 3：卖家声明供给
+## 示例 3：声明供给
 
 ```
 # 1. 注册并验证（同示例 1）
@@ -89,9 +83,8 @@ POST /acap/v1/supply/products
 }
 # → 返回 product_id
 
-# 3. 订阅相关意图类别
-POST /acap/v1/supply/subscriptions
-{"categories": ["食品", "蜂蜜"], "budget_min": 1000000}
+# 3. 查看我的供给列表
+GET /acap/v1/supply/products
 
 # 4. 等待 supply_matched 通知（有买家匹配时自动推送）
 GET /acap/v1/notifications?unread=true&event_type=supply_matched
@@ -113,13 +106,10 @@ PUT /acap/v1/agents/me
 
 ---
 
-## 示例 5：查看余额和 Agent 信息
+## 示例 5：查看余额
 
 ```
 # 查询余额
 GET /acap/v1/compute/balance
 # → {"balance": 50000000, "frozen": 1000000, "total_charged": 500000}
-
-# 查看自己的 Agent 信息
-GET /acap/v1/agents/mine
 ```

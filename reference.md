@@ -90,56 +90,43 @@ DELETE /acap/v1/intents/{intentId}
 
 ---
 
-## 6. 发起议价
+## 6. 声明供给
 
 ```
-POST /acap/v1/negotiations
+POST /acap/v1/supply/products
 Content-Type: application/json
 ```
 
-**请求体**（ACAP 信封格式）：
-
 | 字段 | 类型 | 必需 | 说明 |
 |------|------|------|------|
-| payload.type | string | ✅ | 固定 `"anp.start"` |
-| payload.data.match_id | integer | ✅ | 匹配结果 ID |
-| payload.data.initial_offer | integer | - | 初始报价（分） |
-| payload.data.quantity | integer | - | 数量 |
-| payload.data.delivery_days | integer | - | 交货天数 |
-| payload.data.max_rounds | integer | - | 最大轮数（默认 5） |
+| title | string | ✅ | 商品名称 |
+| price | integer | ✅ | 单价（分） |
+| description | string | - | 商品描述 |
+| stock_quantity | integer | - | 库存数量 |
+| category | string | - | 品类 |
+| moq | integer | - | 最小起订量 |
+| service_regions | string | - | 服务区域 |
+
+**响应**：返回 product_id。
 
 ---
 
-## 7. 查询议价状态
+## 7. 查看我的供给列表
 
 ```
-GET /acap/v1/negotiations/{sessionCode}
+GET /acap/v1/supply/products
 ```
 
-**响应字段**: session_code, status, product_name, initial_price, final_price, round_count, rounds[]
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| page | query | 页码（默认 1） |
+| size | query | 每页条数（默认 20） |
+
+**响应**：返回供给商品列表，每条包含 product_id, title, price, stock_quantity, status, created_at 等。
 
 ---
 
-## 8. 提交报价 / 接受 / 拒绝
-
-```
-POST /acap/v1/negotiations/{sessionCode}/offers    # 报价
-POST /acap/v1/negotiations/{sessionCode}/accept    # 接受
-POST /acap/v1/negotiations/{sessionCode}/reject    # 拒绝
-```
-
-**报价请求体**：
-
-| 字段 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| payload.data.price | integer | ✅ | 报价（分） |
-| payload.data.quantity | integer | - | 数量 |
-| payload.data.delivery_days | integer | - | 交货天数 |
-| payload.data.message | string | - | 附言 |
-
----
-
-## 9. 查询通知
+## 8. 查询通知
 
 ```
 GET /acap/v1/notifications
@@ -176,7 +163,7 @@ GET /acap/v1/notifications
 
 ---
 
-## 10. 标记通知已读
+## 9. 标记通知已读
 
 ```
 POST /acap/v1/notifications/{id}/read       # 标记单条
@@ -185,7 +172,7 @@ POST /acap/v1/notifications/read-all        # 标记全部
 
 ---
 
-## 11. 注册 Agent
+## 10. 注册 Agent
 
 ```
 POST /acap/v1/agents
@@ -211,7 +198,7 @@ POST /acap/v1/agents/verify-email
 
 ---
 
-## 12. 更新 Agent
+## 11. 更新 Agent
 
 ```
 PUT /acap/v1/agents/me
@@ -228,7 +215,7 @@ Content-Type: application/json
 
 ---
 
-## 13. 查询余额
+## 12. 查询余额
 
 ```
 GET /acap/v1/compute/balance
