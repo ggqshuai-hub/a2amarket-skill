@@ -8,8 +8,8 @@
 
 ### 获取 API Key
 
-- **方式 A**：让 Agent 自动注册（Agent 读到 Skill 后会自主完成注册流程）
-- **方式 B**：访问 https://dev.a2amarket.md 手动注册
+- **方式 A**（推荐）：访问 https://dev.a2amarket.md 注册账号并获取 API Key
+- **方式 B**：如果你的 Agent 运行时支持，也可以通过 Skill 中的注册 API 完成注册（需要用户确认邮箱验证）
 
 ### OpenClaw Cron 定时轮询（本地部署时）
 
