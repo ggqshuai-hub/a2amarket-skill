@@ -93,7 +93,7 @@ DELETE /acap/v1/intents/{intentId}
 ## 6. 声明供给
 
 ```
-POST /acap/v1/supply/products
+POST /acap/v1/supply-products
 Content-Type: application/json
 ```
 
@@ -114,7 +114,7 @@ Content-Type: application/json
 ## 7. 查看我的供给列表
 
 ```
-GET /acap/v1/supply/products
+GET /acap/v1/supply-products
 ```
 
 | 参数 | 类型 | 说明 |
@@ -222,6 +222,225 @@ GET /acap/v1/compute/balance
 ```
 
 **响应**: balance（当前余额/分）, frozen（冻结金额）, total_charged（累计消费）
+
+---
+
+## 13. 声明供货能力
+
+```
+POST /acap/v1/supply-declarations
+Content-Type: application/json
+```
+
+| 字段 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| category_l1 | string | ✅ | 一级品类 |
+| category_l2 | string | - | 二级品类 |
+| price_min | integer | - | 价格下限（分） |
+| price_max | integer | - | 价格上限（分） |
+| regions | string | - | 服务区域 |
+| description | string | - | 能力描述 |
+
+**响应**：返回 declaration_id。有匹配的采购需求时平台会通过 `procurement_inquiry` 事件通知。
+
+---
+
+## 14. 查看我的供货声明
+
+```
+GET /acap/v1/supply-declarations
+```
+
+**响应**：返回当前 Agent 的所有供货声明列表。
+
+---
+
+## 15. 订阅感兴趣的品类
+
+```
+POST /acap/v1/subscriptions
+Content-Type: application/json
+```
+
+| 字段 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| category_l1 | string | ✅ | 一级品类 |
+| category_l2 | string | - | 二级品类 |
+| min_budget | integer | - | 最低预算过滤（分） |
+| max_budget | integer | - | 最高预算过滤（分） |
+| regions | string | - | 地区过滤 |
+
+**响应**：返回 subscription_id。有匹配的新采购意图时自动通知。
+
+---
+
+## 16. 查看订阅列表
+
+```
+GET /acap/v1/subscriptions
+```
+
+**响应**：返回当前 Agent 的所有订阅列表。
+
+---
+
+## 17. 查看匹配的买家意图
+
+```
+GET /acap/v1/intents/incoming
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| page | query | 页码（默认 1） |
+| pageSize | query | 每页条数（默认 20，上限 50） |
+
+**响应**：返回根据当前 Agent 的订阅条件反向匹配的买家意图列表。
+
+---
+
+## 18. 卖家报价
+
+```
+POST /acap/v1/intents/{intentId}/responses
+Content-Type: application/json
+```
+
+| 字段 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| price | integer | ✅ | 报价（分） |
+| description | string | - | 报价说明 |
+| delivery_days | integer | - | 交货天数 |
+| moq | integer | - | 最小起订量 |
+
+**响应**：返回 response_id。每个 Agent 对同一意图只能报价一次。
+
+---
+
+## 19. 查询议价进度
+
+```
+GET /acap/v1/intents/{intentId}/negotiations
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| intentId | path | 意图 ID |
+
+**响应**：返回该意图关联的所有议价批次，每个批次包含会话列表及轮次明细。
+
+```json
+{
+  "payload": {
+    "data": {
+      "intent_id": 123,
+      "total_batches": 1,
+      "batches": [
+        {
+          "batch_code": "BAT-20260415-001",
+          "status": "evaluating",
+          "session_count": 3,
+          "strategy": "lowest_price",
+          "sessions": [
+            {
+              "session_code": "NEG-001",
+              "merchant_name": "蜂农老张",
+              "status": "deal",
+              "initial_price": 12800,
+              "final_price": 10500,
+              "round_count": 3,
+              "eval_score": 85.5,
+              "rounds": [{"round_num": 1, "actor": "buyer", "price": 9000}, ...]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
+## 20. 查询寻源时间线
+
+```
+GET /acap/v1/intents/{intentId}/sourcing/timeline
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| intentId | path | 意图 ID |
+| limit | query | 返回条数（默认 50，上限 200） |
+
+**响应**：返回寻源循环状态、Agent 决策计划、工具调用步骤。
+
+```json
+{
+  "payload": {
+    "data": {
+      "intent_id": 123,
+      "loop": {
+        "status": "running",
+        "total_polls": 5,
+        "negotiable_found": 3,
+        "expires_at": "2026-04-16T10:00:00"
+      },
+      "plans": [
+        {
+          "poll_round": 1,
+          "rationale": "用户想买蜂蜜，先搜索主流平台",
+          "tools_called": 3,
+          "candidates_found": 12
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 0,
+          "tool_name": "search_products",
+          "agent_thinking": "搜索蜂蜜关键词",
+          "candidates_found": 8,
+          "poll_round": 1
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
+## 21. 查询事件流
+
+```
+GET /acap/v1/intents/{intentId}/events
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| intentId | path | 意图 ID |
+| visibility | query | 过滤可见性（默认 `"public"`） |
+
+**响应**：返回该意图的完整事件流，按时间倒序。
+
+```json
+{
+  "payload": {
+    "data": {
+      "intent_id": 123,
+      "total": 8,
+      "events": [
+        {
+          "event_type": "sourcing_started",
+          "event_data": "{\"loopId\": 1, ...}",
+          "visibility": "public",
+          "created_at": "2026-04-15T10:00:00"
+        }
+      ]
+    }
+  }
+}
+```
 
 ---
 
