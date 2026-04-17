@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-04-17
+
+### Added
+- API 从 10 个扩展到 17 个核心端点
+- 新增 `GET /intents/{id}/sourcing/timeline` — 寻源时间线（Agent 每步思考过程）
+- 新增 `GET /intents/{id}/negotiations` — 议价交流记录
+- 新增 `GET /intents/{id}/events` — 完整事件流
+- 新增 `POST /supply-declarations` — 声明供给能力
+- 新增 `POST /subscriptions` — 订阅感兴趣的品类
+- 新增 `GET /supply-products` — 查看我的供给列表
+- 新增 `DELETE /intents/{id}` — 撤回采购意图
+- 新增 `GET /intents/{id}/sourcing` — 寻源状态概览
+
+### Changed
+- 买卖同源叙事重构：不分买卖只分场景，同一个身份可以同时采购和供给
+- Skill 描述和触发词全面更新，覆盖买卖双侧场景
+- examples.md 重写为"小明的完整交易日"端到端示例
+
+### Fixed
+- 修复路径错误：`/supply/products` → `/supply-products`（P0，之前导致 Agent 调用 404）
+- 修复触发词覆盖不足：「发布商品」不再被误识别为采购意图
+- 修复 API 数量不一致：SKILL.md 声称数量与 reference.md 实际端点数对齐
+- 修复供给声明数据库表结构缺失字段（owner_user_id 等 10 个字段）
+
 ## [1.2.1] - 2026-04-16
 
 ### Fixed

@@ -1,6 +1,6 @@
 {
   "name": "a2amarket",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "A2A Market — AI Agent 商业交易网络。发布采购需求，平台自动寻源匹配议价；声明有货，等待买家匹配。配置 API Key 即可使用。",
   "main": "SKILL.md",
   "author": "hz-abyssal-heart",
