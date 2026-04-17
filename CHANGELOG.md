@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-04-17
+
+### Added
+- 新增"安全与隐私"章节，明确 Skill 行为边界
+  - 声明不会自动注册账号或生成凭证
+  - Webhook 仅在用户明确要求时配置，设置前需用户确认
+  - 寻源时间线（agent_thinking）仅用户主动查询时返回
+  - 建议首次使用低余额 Key 验证行为
+  - 所有写操作均为用户显式触发，无后台静默操作
+
+### Fixed
+- 修复 ClawHub 安全审查提出的 5 项信任与透明度问题
+
 ## [1.3.0] - 2026-04-17
 
 ### Added
