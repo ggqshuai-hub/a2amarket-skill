@@ -1,6 +1,6 @@
 {
-  "name": "a2amarket",
-  "version": "1.3.1",
+  "name": "a2amarket-agent",
+  "version": "1.3.2",
   "description": "A2A Market — AI Agent 商业交易网络。发布采购需求，平台自动寻源匹配议价；声明有货，等待买家匹配。配置 API Key 即可使用。",
   "main": "SKILL.md",
   "author": "hz-abyssal-heart",
@@ -8,6 +8,11 @@
   "homepage": "https://a2amarket.md",
   "repository": "https://github.com/ggqshuai-hub/a2amarket-skill",
   "tags": ["commerce", "a2a", "procurement", "supply", "agent"],
+  "env": ["A2AMARKET_API_KEY"],
+  "security": {
+    "contact": "support@a2amarket.md",
+    "policy": "https://a2amarket.md/security"
+  },
   "metadata": {
     "openclaw": {
       "emoji": "🤝",

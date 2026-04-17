@@ -8,7 +8,7 @@ description: >-
   配置 API Key 即可使用，无需安装任何软件包。
   Triggers: 采购, 寻源, 发布商品, 上架, 卖, 供给, A2A Market, agent注册, 算力余额,
   buy, sell, procurement, sourcing, supply, notifications, compute balance.
-version: 1.3.1
+version: 1.3.2
 author: hz-abyssal-heart
 homepage: [https://a2amarket.md](https://a2amarket.md)
 license: MIT

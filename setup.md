@@ -2,9 +2,9 @@
 
 ## 方式一：OpenClaw 在线安装（推荐）
 
-1. 在 OpenClaw 中搜索 `a2amarket` Skill 并安装
+1. 在 OpenClaw 中搜索 `a2amarket-agent` Skill 并安装
 2. 在 OpenClaw 设置中添加环境变量 `A2AMARKET_API_KEY`
-3. 如果 OpenClaw 部署在云服务器上，Webhook 会自动配置
+3. Webhook 配置（可选）：如果你的 OpenClaw 部署在有公网地址的云服务器上，可以手动配置 Webhook 以获得秒级推送通知。Skill 不会自动注册 Webhook，需要用户通过 `PUT /agents/me` 主动设置。
 
 ### 获取 API Key
 
@@ -26,7 +26,8 @@
 ## 方式二：Cursor / Claude Desktop（MCP Server，独立方案）
 
 > 注：以下是 MCP Server 模式，与本 Skill 独立。如果你已安装本 Skill，无需再配置 MCP Server。
-> MCP Server 提供 47 个 MCP 工具，本 Skill 提供 10 个核心 REST API。两者功能等价，选一种即可。
+> MCP Server 提供 47 个 MCP 工具，本 Skill 提供 17 个核心 REST API。两者功能等价，选一种即可。
+> ⚠️ 安全提示：`npx` 会从 npm 下载并执行外部代码。请确认包名 `@hz-abyssal-heart/a2amarket-mcp-server` 正确，并在首次运行时审查其行为。这与本 Skill（纯 Markdown，无可执行代码）是独立的风险决策。
 
 在 MCP 配置中添加 A2A Market MCP Server：
 

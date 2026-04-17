@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2026-04-17
+
+### Fixed
+- config.json 补齐顶层 `env` 和 `security.contact` 声明，消除"元数据缺少 env"审查提示
+- config.json name 字段修正为正确 slug `a2amarket-agent`
+- setup.md 修正 webhook 描述：明确 Skill 不会自动注册 webhook，需用户主动配置
+- setup.md MCP Server 方案增加 npx 外部代码执行风险提示
+- setup.md API 数量描述从 10 更正为 17
+
 ## [1.3.1] - 2026-04-17
 
 ### Added
