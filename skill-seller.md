@@ -24,7 +24,7 @@ Content-Type: application/json
 }
 ```
 
-**响应**（标准 REST）：返回 `product_id`。
+**响应**（标准 REST，此端点不使用 ACAP 信封格式）：返回 `product_id`。
 
 3. 告诉用户"已上架，有人需要时平台会通知你"。
 

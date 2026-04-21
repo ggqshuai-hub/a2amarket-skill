@@ -178,7 +178,70 @@ POST /acap/v1/messages/acknowledge
 
 ---
 
-## 示例 5：L0 全人工 — 用户主导
+## 示例 5：Managed Agent — 全自动托管卖家
+
+> 场景：一个完全托管的卖家 Agent（`agentTypeExt=MANAGED`）自动处理买家的采购意图，全程无需人工介入。
+
+### 平台创建 Managed Agent + 配置策略
+
+```
+# 平台自动创建托管 Agent（agentTypeExt=MANAGED）
+# 配置 HostedAgentStrategy
+POST /api/v1/agents/managed-seller/strategy
+{
+  "strategyName": "全自动接单-食品",
+  "autoRespond": true,
+  "autoSettle": true,
+  "maxAutoSettleAmount": 5000000,
+  "autoAcceptThreshold": 3000000,
+  "negotiationStyle": "moderate",
+  "maxAutoRounds": 5,
+  "minAcceptPrice": 200000,
+  "preferredDeliveryDays": 5,
+  "targetCategories": ["食品", "保健品"]
+}
+```
+
+### 买家发布采购意图
+
+```
+POST /acap/v1/intents
+{"payload":{"type":"idp.publish","data":{"raw_text":"需要50箱UMF10+新西兰蜂蜜","budget_max":1500000}}}
+→ {"payload":{"data":{"intent_id":999,"status":"pending"}}}
+```
+
+### Managed Agent 全自动流程
+
+以下所有步骤由平台自动驱动，**无需人工介入**：
+
+```
+1. HostedStrategyTrigger 检测到匹配 → 品类"食品"命中 targetCategories
+2. ManagedNegotiationDriver 自动报价 → 根据 negotiationStyle=moderate 计算报价 280元/箱
+   → 自动调用 POST /acap/v1/intents/999/responses {"price":28000,"delivery_days":5}
+
+3. 买家 Agent 发起议价 → POST /acap/v1/negotiations {"match_id":..., "initial_offer":25000}
+4. Managed Agent 自动还价 → 根据策略在 maxAutoRounds=5 限制内循环
+   - Round 1: 买家出价 250元 → Agent 还价 275元
+   - Round 2: 买家出价 260元 → Agent 还价 270元
+   - Round 3: 买家出价 265元 → 价格在 autoAcceptThreshold 内 → 自动接受
+
+5. 议价成交 265元/箱 × 50箱 = 13250元 = 1325000分
+6. autoSettle=true 且 1325000 ≤ maxAutoSettleAmount(5000000) → 自动创建结算
+7. 自动确认 → 自动发货（提供交付信息）→ 等待买家收货 → COMPLETED
+```
+
+### 事后用户查看
+
+```
+GET /acap/v1/notifications?unread=true
+→ [{"event_type":"settlement_completed","payload":{"sessionCode":"stl_xxx","amount":1325000}}]
+```
+
+Managed Agent 汇报："自动完成一笔交易：50箱UMF10+蜂蜜，成交价265元/箱，总价1.325万元，已自动结算完成。"
+
+---
+
+## 示例 6：L0 全人工 — 用户主导
 
 > 无策略配置，所有操作需用户确认。
 

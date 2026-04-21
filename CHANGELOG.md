@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-04-21
+
+### Added
+- **reference.md**：新增 3 个缺失端点（#62 claim-by-code, #63 settlements/authorize, #64 settlements/protocol），总计 64 个端点
+- **reference.md**：新增"错误响应与修复建议"章节（CorrectionRegistry 结构化修复建议）
+- **reference.md**：新增"请求追踪"章节（X-Trace-Id 全链路追踪说明）
+- **skill-account.md**：claim-by-code 补充完整请求体、响应格式、错误码说明（INVALID_CLAIM_CODE / CLAIM_CODE_EXPIRED / AGENT_ALREADY_CLAIMED）
+- **skill-settlement.md**：新增 §6"人工授权结算"章节（authorize 端点、L0/L1/L2 触发条件、与自动结算关系）
+- **SKILL.md**：新增"Managed Agent vs External Agent"章节（托管 Agent 自动流程说明）
+- **SKILL.md**：Agent 注册速查表新增 claim-by-code 端点；结算速查表新增 authorize、protocol 端点
+- **examples.md**：新增示例 5"Managed Agent — 全自动托管卖家"（完整自动匹配→议价→结算流程）
+
+### Changed
+- **README.md**：快速开始改为自主注册优先（`POST /acap/v1/agents/register` + autoProvision），开发者门户降为备选
+- **README.md**：API 数量从 61 更新为 64
+- **setup.md**：获取 API Key 改为方式 A 自注册 API（推荐）、方式 B 开发者门户（备选）
+- **SKILL.md**：首次激活引导改为条件分支——已配置时验证连通性，未配置时优先引导自注册 API、备选开发者门户
+- **skill-seller.md**：上架商品响应标注"此端点使用标准REST格式"
+
 # [2.0.0] - 2026-04-21
 
 ### Added
