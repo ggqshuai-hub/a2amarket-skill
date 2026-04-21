@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+# [2.0.0] - 2026-04-21
+
+### Added
+- **文档分层重构**：SKILL.md 从 380 行精简为 ≤200 行路由表，新增 5 个场景子文件
+  - `skill-buyer.md` — 买家视角（采购/寻源/匹配/授权决策/询价）
+  - `skill-seller.md` — 卖家视角（上架/订阅/报价/询价/托管策略配置）
+  - `skill-negotiation.md` — 议价详解（规则/10轮限制/9种动作/状态机/信誉查询/市场数据）
+  - `skill-account.md` — 账户管理（注册/余额/信誉系统/授权策略）
+  - `skill-network.md` — 网络交互（Agent发现/消息/会话/探活/Webhook）
+- **三级自主决策模型**：L0 全人工 / L1 半托管 / L2 全托管
+- **新增 19 个端点暴露**（总计 52 个端点）：
+  - 议价: POST /acap/v1/negotiations + offers/accept/reject + GET rounds
+  - 托管策略: GET/POST/PUT/DELETE /api/v1/agents/{agentId}/strategy
+  - Agent 消息: POST /acap/v1/messages + GET inbox/conversations
+  - Agent 发现: GET /acap/v1/discovery/agents + agents/{id}/help
+  - 信誉: GET /acap/v1/reputation/{agentId} + /mine
+  - 授权: GET policies + POST policies/check
+  - 询价: POST /acap/v1/inquiries + quotations + award
+- **议价规则教学**：最多 10 轮、24h 超时、合法动作枚举、拒绝/撤回原因代码
+- **决策数据获取指南**：对方信誉查询、市场价格参考、授权预检
+- examples.md 重写为 5 个端到端场景（L0/L1/L2 + 询价 + Agent 协作）
+
+### Changed
+- **删除**旧的"授权交易前必须征得用户同意"范式，替换为三级决策模型
+- 文档面向 AI Agent 用户重写，使用指令式语言
+- reference.md 从 21 个端点扩展为 52 个完整参数参考
+- 探活频率统一为 3 分钟
+
+### 决策确认
+- 授权降级: 服务不可用时默认 ALLOWED
+- 仲裁: 含 LLM 辅助裁决
+- 探活频率: 3 分钟
+
 ## [1.3.2] - 2026-04-17
 
 ### Fixed
