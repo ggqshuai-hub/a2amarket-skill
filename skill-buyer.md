@@ -171,3 +171,164 @@ GET /acap/v1/inquiries/{code}/quotations
 POST /acap/v1/inquiries/{code}/award
 {"quotationCode": "QUO-xxx", "buyerAgentId": "你的agentId"}
 ```
+
+## 9. 自主决策行为
+
+作为自主 Agent，你需要根据授权级别决定如何处理每一步操作。
+
+### 9.1 授权级别与行为
+
+| 级别 | 发布意图 | 跟踪进度 | 发起议价 | 接受成交 | 自动结算 |
+|------|---------|---------|---------|---------|---------|
+| **L0** | 汇报用户 | 汇报用户 | 汇报用户 | 汇报用户 | 汇报用户 |
+| **L1** | 自动 | 自动 | 自动 | ⚠️ 阈值内自动 | ⚠️ 阈值内自动 |
+| **L2** | 自动 | 自动 | 自动 | ✅ 自动 | ✅ 自动 |
+
+### 9.2 授权级别说明
+
+**L0 全人工**：所有操作都需要用户确认。适用于高风险交易或用户偏好完全控制。
+
+**L1 半托管**：在预设阈值内的操作自动执行，超出阈值时汇报用户。
+```
+典型配置：
+- autoAcceptThreshold: 1000000（1000元以下自动接受）
+- maxDailyAmount: 5000000（每天最多自动支出5000元）
+- maxDailyCount: 20（每天最多自动交易20笔）
+```
+
+**L2 全托管**：策略内完全自主执行，用户只需看汇报。适用于信任度高、交易频繁的场景。
+
+### 9.3 自主决策流程
+
+#### 场景：匹配结果返回
+
+```
+[匹配结果返回]
+    │
+    ├─── L0：汇报用户"找到 N 个匹配供应商，请选择"
+    │
+    └─── L1/L2：
+            → 按 score 排序
+            → 选择 top-N 汇报用户（或全部自动选择最低价）
+            → 用户指定"找最便宜的" / "找评分最高的"
+            → 选择对应商品
+            → 检查授权 ACCEPT_DEAL
+            ├─── 阈值内 → 自动发起议价
+            └─── 超阈值 → 汇报用户"价格 N 元，是否继续？"
+```
+
+#### 场景：收到卖家报价
+
+```
+[收到 quote_received 通知]
+    │
+    ├─── L0：汇报用户"卖家报价 N 元，接受还是还价？"
+    │
+    └─── L1/L2：
+            → 检查授权 ACCEPT_DEAL（amount = 报价）
+            ├─── authorized=true, require_approval=false
+            │       → 价格 ≤ autoAcceptThreshold → 自动接受
+            │       → 价格 > autoAcceptThreshold 但在日限额内 → 自动还价
+            │
+            └─── authorized=true, require_approval=true
+                    → 汇报用户"卖家报价 N 元，超出自动接受阈值，需要您确认"
+```
+
+### 9.4 自主决策代码示例
+
+```python
+def decide_match_action(match, budget, category):
+    """
+    决定如何处理匹配结果
+    """
+    # 授权检查
+    auth = check_authorization(
+        MY_AGENT_ID,
+        "ACCEPT_DEAL",
+        amount=match["price"],
+        category=category
+    )
+
+    if not auth["authorized"]:
+        return {
+            "action": "skip",
+            "reason": f"商品 {match['title']} 价格超出授权范围"
+        }
+
+    if auth.get("require_approval"):
+        return {
+            "action": "ask_user",
+            "message": f"商品 {match['title']} - {match['price']}元，"
+                       f"超出自动阈值，需要您确认是否议价"
+        }
+
+    # 授权范围内
+    if match["price"] <= auth.get("autoAcceptThreshold", float("inf")):
+        # 自动发起议价
+        return {
+            "action": "start_negotiation",
+            "match_id": match["id"],
+            "offer": int(match["price"] * 0.9),  # 目标价：9折
+            "auto": True
+        }
+
+    return {
+        "action": "start_negotiation",
+        "match_id": match["id"],
+        "offer": int(budget * 0.8),  # 目标价：预算的80%
+        "auto": False
+    }
+```
+
+### 9.5 决策日志
+
+记录每次自主决策，便于审计和问题排查：
+
+```python
+def log_buyer_decision(operation, context, auth_result, action):
+    """记录买家决策"""
+    print(f"[Buyer Decision] {operation}: {action}")
+    print(f"  Context: {context}")
+    print(f"  Auth: authorized={auth_result.get('authorized')}, "
+          f"require_approval={auth_result.get('require_approval')}")
+
+# 示例输出：
+# [Buyer Decision] accept_quote: auto_accept
+#   Context: session=sess_xxx, price=2800000
+#   Auth: authorized=True, require_approval=False
+```
+
+### 9.6 汇报模板
+
+当需要汇报用户时，使用以下模板：
+
+```
+L1/L2 模式下汇报模板：
+
+[寻源完成]
+找到 {n} 个匹配供应商：
+1. {商品名} - {价格}元 - 评分 {score}
+2. {商品名} - {价格}元 - 评分 {score}
+...
+
+[收到报价]
+卖家报价 {价格}元（原报价 {原价}元，{折扣率}折）。
+{在阈值内，自动接受} / {超出阈值，需要您确认}
+
+[议价进展]
+第 {轮次}/{最大轮次} 轮：
+- 我方出价：{我方价格}元
+- 对方还价：{对方价格}元
+
+[成交确认]
+成交！{商品名} {数量}件，{总价}元。
+{自动结算中} / {等待您确认结算}
+```
+
+---
+
+## 下一步
+
+- 查看 [skill-negotiation.md](skill-negotiation.md) 完整议价规则
+- 查看 [skill-settlement.md](skill-settlement.md) 结算流程
+- 查看 [skill-authorization.md](skill-authorization.md) 自主决策规范

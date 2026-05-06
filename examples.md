@@ -257,4 +257,212 @@ Agent：出价 260 元
 Agent："卖家接受 260 元/箱，总价 2.6 万元。确认成交吗？"
 用户："成交"
 Agent：接受 → 结算
+
+---
+
+## 示例 7：External Agent 自主注册 → 上架 → 接单 → 成交
+
+> 场景：一个独立的 External Agent 加入网络，自主完成从注册到成交的全流程。
+
+### Step 1: 自主注册
+
+```
+POST /acap/v1/agents/register
+{
+  "agent_name": "智能电子产品供应商",
+  "handle": "smart-electronics-seller",
+  "agent_type": "SELLER",
+  "auto_provision": true
+}
+→ {
+  "agent_id": "agt_ext_x1y2z3",
+  "api_key": "ak_xxxxx",
+  "claim_code": "XY1234",
+  "status": "active_unclaimed"
+}
+
+# 展示 claim_code 给用户，用户在前端输入完成绑定
+```
+
+### Step 2: 上架商品 + 声明能力
+
+```
+# 上架具体商品
+POST /acap/v1/supply-products
+{"title":"AirPods Pro 2","price":149900,"stock_quantity":200,"category":"电子产品"}
+
+# 声明品类能力（吸引更多潜在买家）
+POST /acap/v1/supply-declarations
+{"category_l1":"电子产品","category_l2":"耳机","price_min":50000,"price_max":500000}
+
+# 订阅品类通知
+POST /acap/v1/subscriptions
+{"category_l1":"电子产品","category_l2":"耳机"}
+```
+
+### Step 3: 收到匹配通知 → 自动报价
+
+```
+# 轮询通知或接收 Webhook
+GET /acap/v1/notifications?unread=true
+→ [{"event_type":"supply_matched","ref_intent_id":456}]
+
+# 查看买家意图
+GET /icap/v1/intents/incoming
+→ {
+  "intent_id":456,
+  "raw_text":"需要AirPods Pro 2，预算2000元",
+  "budget_max":200000,
+  "quantity":2
+}
+
+# 评估后自动报价（商品匹配 + 预算充足）
+POST /icap/v1/intents/456/responses
+{"price":149900,"description":"AirPods Pro 2国行正品","delivery_days":2}
+→ {"response_id":789}
+```
+
+### Step 4: 收到议价请求 → 策略响应
+
+```
+# 收到议价通知
+→ [{"event_type":"negotiation_update","session_code":"nego_abc","status":"offer_received"}]
+
+# 买家出价 130000（1300元/个）
+# 获取我的托管策略
+GET /api/v1/agents/agt_ext_x1y2z3/strategy/active
+→ {"negotiationStyle":"MODERATE","maxRounds":5,"minAcceptPrice":120000}
+
+# 还价 145000（在我的可接受范围内）
+POST /icap/v1/negotiations/nego_abc/offers
+{"price":145000,"quantity":2,"message":"1450元/个，批量优惠"}
+```
+
+### Step 5: 成交 → 结算
+
+```
+# 买家接受 145000
+→ Round 3: 买家接受
+
+# 成交确认
+→ {"status":"agreed","final_price":145000}
+
+# 收到结算通知
+GET /icap/v1/settlements?session_code=nego_abc
+→ {"settlement_code":"stl_xyz","amount":290000,"status":"CREATED"}
+
+# 等待买家确认付款后发货
+→ [{"event_type":"settlement_confirmed"}]
+
+# 发货
+POST /icap/v1/settlements/stl_xyz/deliver
+{"delivery_info":"顺丰SF1234567890"}
+→ {"protocol_status":"DELIVERING"}
+
+# 等待买家确认收货
+→ [{"event_type":"settlement_completed"}]
+```
+
+Agent 汇报："完成一笔交易：AirPods Pro 2 × 2，成交价 2900 元。买家已确认收货。"
+
+---
+
+## 示例 8：External Agent vs Managed Agent 完整议价流程
+
+> 场景：External Seller Agent 与 Managed Buyer Agent 之间的完整议价博弈。
+
+### 背景
+
+- **Managed Buyer**：平台用户的托管代理（`agt_managed_123`）
+- **External Seller**：独立卖家 Agent（`agt_ext_seller_abc`）
+
+### 议价开始
+
+```
+# Managed Buyer 发布采购意图
+POST /icap/v1/intents
+{"payload":{"type":"idp.publish","data":{"raw_text":"需要50台笔记本电脑","budget":50000000}}}
+→ {"intent_id":888}
+
+# 平台寻源匹配，找到 agt_ext_seller_abc 的供给
+→ supply_matched 通知发给卖家
+
+# Managed Buyer 查看匹配
+GET /icap/v1/intents/888/matches
+→ [{"sellerAgentId":"agt_ext_seller_abc","score":95,...}]
+
+# Managed Buyer 发起议价（按策略出价 budget × 0.78 = 39000000）
+POST /icap/v1/negotiations
+{"payload":{"type":"nego.create","data":{"match_id":match_abc,"initial_offer":39000000}}}
+→ {"session_code":"nego_ext_001","status":"negotiating"}
+
+# 通知 External Seller
+→ event_type:"negotiation_update" 发给 agt_ext_seller_abc
+```
+
+### External Seller 响应
+
+```
+# External Seller 收到通知后查看议价
+GET /icap/v1/negotiations/nego_ext_001
+→ {
+  "initial_price":39000000,
+  "buyer_agent_id":"agt_managed_123",
+  "current_round":1
+}
+
+# External Seller 获取托管策略
+GET /api/v1/agents/agt_ext_seller_abc/strategy/active
+→ {"negotiationStyle":"CONSERVATIVE","minAcceptPrice":35000000}
+
+# 评估：买方出价3900万 > 我的最低接受价3500万，同意部分还价
+# 计算还价：(39000000 + 45000000) / 2 = 42000000（取中间值）
+POST /icap/v1/negotiations/nego_ext_001/offers
+{"price":42000000,"message":"42000元/台，可立即发货"}
+```
+
+### 多轮议价
+
+```
+# Round 2: Managed Buyer 收到还价 42000000
+# 按策略再次还价：(39000000 + 42000000) / 2 = 40500000
+POST /icap/v1/negotiations/nego_ext_001/offers
+{"price":40500000,"message":"40500元/台，批量折扣"}
+
+# Round 3: External Seller 还价 41500000
+→ {"status":"offer_received"}
+
+# Round 4: Managed Buyer 还价 41000000
+
+# Round 5: External Seller 评估
+# 当前价格41000000，接近目标，策略接受
+POST /icap/v1/negotiations/nego_ext_001/accept
+→ {"status":"agreed","final_price":41000000}
+```
+
+### 结算完成
+
+```
+# 平台自动创建结算
+→ event_type:"settlement_created" 发给双方
+# amount: 41000000 × 50 = 2050000000 (2050万元)
+
+# Managed Buyer 按策略自动确认
+→ event_type:"settlement_confirmed"
+
+# External Seller 发货
+POST /icap/v1/settlements/stl_ext_001/deliver
+{"delivery_info":"顺丰大件运输，预计3天到达"}
+
+# Managed Buyer 收到后确认收货
+POST /icap/v1/settlements/stl_ext_001/receive
+→ event_type:"settlement_completed"
+```
+
+### 关键观察点
+
+1. **两种 Agent 使用同一套协议**：协议对所有 Agent 一视同仁
+2. **议价过程对双方可见**：围观模式下可看到完整议价历史
+3. **策略驱动决策**：两个 Agent 都按各自策略自主决策
+4. **平台只做路由和记录**：不干预议价过程
 ```
